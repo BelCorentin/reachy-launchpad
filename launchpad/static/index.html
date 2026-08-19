@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>reachy launchpad</title>
+<style>
+  :root{
+    --bg:#07080c; --panel:rgba(13,16,24,.72); --border:#232b3a; --radius:12px;
+    --fg:#e8e6df; --dim:#8a8fa3; --accent:#6ea8ff; --purple:#b48ce8; --teal:#38a3a5;
+    --warn:#e8b34c; --bad:#e06c75;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--fg); padding:28px 20px 80px;
+    font:15px/1.55 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background-image:radial-gradient(900px 500px at 15% -10%, rgba(110,168,255,.10), transparent 60%),
+                     radial-gradient(700px 420px at 95% 0%, rgba(180,140,232,.08), transparent 60%);
+    background-attachment:fixed;
+  }
+  .wrap{max-width:1080px;margin:0 auto}
+  h1{font-size:1.5rem;margin:0;font-weight:650;letter-spacing:-.01em}
+  h1 .dot{color:var(--purple)}
+  .sub{color:var(--dim);margin:4px 0 0;font-size:.92rem}
+  header{
+    display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;
+    background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin-bottom:18px;
+  }
+  .pill{
+    display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);
+    border-radius:999px;padding:7px 14px;font-size:.88rem;background:rgba(255,255,255,.02);
+  }
+  .pill.up{border-color:rgba(56,163,165,.55);color:#bfeceb}
+  .pill.down{border-color:rgba(224,108,117,.45);color:#f0b7bb}
+  .right{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  button{
+    font:inherit;font-size:.87rem;color:var(--fg);background:rgba(255,255,255,.035);
+    border:1px solid var(--border);border-radius:10px;padding:7px 12px;cursor:pointer;
+    transition:border-color .12s,background .12s,opacity .12s;
+  }
+  button:hover:not(:disabled){border-color:var(--accent);background:rgba(110,168,255,.10)}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  button:disabled{opacity:.38;cursor:not-allowed}
+  button.primary{border-color:rgba(110,168,255,.5);color:#cfe2ff}
+  button.stop{border-color:rgba(224,108,117,.45);color:#f0b7bb}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
+  .card{
+    background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border:1px solid var(--border);border-radius:var(--radius);padding:16px 17px;
+    display:flex;flex-direction:column;gap:10px;
+  }
+  .card.live{border-color:rgba(180,140,232,.55);box-shadow:0 0 0 1px rgba(180,140,232,.18)}
+  .card h2{margin:0;font-size:1.05rem;font-weight:600;display:flex;align-items:center;gap:9px}
+  .card h2 .emoji{font-size:1.3rem}
+  .pitch{color:var(--dim);font-size:.9rem;margin:0}
+  .badges{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .badge{font-size:.74rem;padding:3px 9px;border-radius:999px;border:1px solid var(--border);color:var(--dim)}
+  .badge.tested{border-color:rgba(56,163,165,.5);color:#9fdedc}
+  .badge.untested{border-color:rgba(232,179,76,.45);color:#f0d49a}
+  .badge.web{border-color:rgba(180,140,232,.45);color:#dcc6f4}
+  .needs{font-size:.95rem;letter-spacing:2px}
+  details summary{
+    cursor:pointer;color:var(--accent);font-size:.85rem;list-style:none;
+    padding:2px 0;user-select:none;
+  }
+  details summary::-webkit-details-marker{display:none}
+  details summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  details summary::before{content:"▸ ";display:inline-block;transition:transform .12s}
+  details[open] summary::before{content:"▾ "}
+  .body{font-size:.88rem;color:#c9c7c0;border-top:1px solid var(--border);margin-top:8px;padding-top:10px}
+  .body p{margin:0 0 9px}
+  .body .label{color:var(--purple);font-size:.76rem;text-transform:lowercase;letter-spacing:.04em;margin:12px 0 4px}
+  .body ul{margin:0;padding-left:18px;color:var(--dim)}
+  .body li{margin-bottom:4px}
+  .body a{color:var(--accent)}
+  .actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:auto;padding-top:4px}
+  .banner{
+    background:var(--panel);border:1px solid rgba(180,140,232,.5);border-radius:var(--radius);
+    padding:14px 16px;margin-bottom:18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+  }
+  .banner .what{font-weight:600}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.8rem;color:var(--dim)}
+  #logs{
+    background:#04050a;border:1px solid var(--border);border-radius:var(--radius);
+    padding:12px 14px;margin-top:12px;max-height:340px;overflow:auto;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.78rem;
+    color:#b9c4d6;white-space:pre-wrap;word-break:break-word;
+  }
+  #logs[hidden]{display:none}
+  .toast{
+    position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:9;
+    background:rgba(13,16,24,.94);border:1px solid var(--border);border-radius:10px;
+    padding:10px 16px;font-size:.86rem;max-width:90vw;
+  }
+  .toast.err{border-color:rgba(224,108,117,.6);color:#f0b7bb}
+  .soon{border-style:dashed;opacity:.85}
+  footer{color:var(--dim);font-size:.8rem;margin-top:26px;text-align:center}
+  .skip{position:absolute;left:-9999px}
+  .skip:focus{left:12px;top:12px;position:fixed;background:#111;padding:8px 12px;border-radius:8px;z-index:20}
+</style>
+</head>
+<body>
+<a class="skip" href="#apps">skip to apps</a>
+<div class="wrap">
+
+  <header>
+    <div>
+      <h1>reachy launchpad<span class="dot">.</span></h1>
+      <p class="sub">everything i built for the little robot — and how to start it</p>
+    </div>
+    <div class="right">
+      <span id="robot-pill" class="pill" role="status" aria-live="polite">⏳ checking the robot…</span>
+      <button id="btn-motors" disabled title="POST /api/motors/set_mode/enabled">🦾 enable motors</button>
+      <button id="btn-media" disabled title="POST /api/media/acquire">🎥 acquire media</button>
+      <button id="btn-refresh" title="re-probe now">↻</button>
+    </div>
+  </header>
+
+  <div id="banner" class="banner" hidden>
+    <span class="what" id="banner-what"></span>
+    <span class="mono" id="banner-meta"></span>
+    <span style="flex:1"></span>
+    <button id="btn-logs">📜 logs</button>
+    <button id="btn-stop" class="stop">⏹ stop</button>
+  </div>
+  <pre id="logs" hidden aria-label="app output"></pre>
+
+  <main id="apps" class="grid"></main>
+
+  <footer>local only · 127.0.0.1:7880 · it shells out, so it never leaves this laptop</footer>
+</div>
+
+<script>
+const $ = (s, r=document) => r.querySelector(s);
+let APPS = [], ROBOT = null, RUN = null, LOGS_OPEN = false, LOG_SEEN = 0;
+
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+async function api(path, opts) {
+  const r = await fetch(path, Object.assign({headers:{"Content-Type":"application/json"}}, opts||{}));
+  let body = null;
+  try { body = await r.json(); } catch (e) { body = null; }
+  if (!r.ok) throw new Error((body && (body.detail || body.error)) || ("HTTP " + r.status));
+  return body;
+}
+
+function toast(msg, isErr) {
+  const old = $(".toast"); if (old) old.remove();
+  const el = document.createElement("div");
+  el.className = "toast" + (isErr ? " err" : "");
+  el.setAttribute("role", isErr ? "alert" : "status");
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 5200);
+}
+
+function uptime(s) {
+  s = Math.max(0, Math.floor(s));
+  const m = Math.floor(s/60), h = Math.floor(m/60);
+  return h ? `${h}h${String(m%60).padStart(2,"0")}` : m ? `${m}m${String(s%60).padStart(2,"0")}` : `${s}s`;
+}
+
+// ---------------------------------------------------------------- rendering
+
+const BADGE = {
+  "robot-tested": ["tested", "🤖 robot-tested"],
+  "built-not-robot-tested": ["untested", "🧪 built, not robot-tested"],
+  "deployed-web": ["web", "🌐 deployed on the web"],
+};
+
+function cardHTML(a) {
+  const [cls, label] = BADGE[a.status] || ["", a.status];
+  const running = RUN && RUN.running && RUN.app_id === a.id;
+  const paras = a.description.split("\n\n").map(p => `<p>${esc(p)}</p>`).join("");
+  const notes = (a.notes||[]).map(n => `<li>${esc(n)}</li>`).join("");
+  const links = [];
+  if (a.github_url) links.push(`<a href="${esc(a.github_url)}" target="_blank" rel="noopener">github ↗</a>`);
+  if (a.url) links.push(`<a href="${esc(a.url)}" target="_blank" rel="noopener">open the space ↗</a>`);
+
+  return `
+  <section class="card${running ? " live" : ""}" id="card-${esc(a.id)}">
+    <h2><span class="emoji" aria-hidden="true">${esc(a.emoji)}</span>${esc(a.name)}</h2>
+    <p class="pitch">${esc(a.pitch)}</p>
+    <div class="badges">
+      <span class="badge ${cls}" title="${esc(a.status_detail)}">${label}</span>
+      <span class="needs" title="${esc((a.needs||[]).join(", "))}" aria-label="needs ${esc((a.needs||[]).join(", "))}">${(a.need_icons||[]).join("")}</span>
+      ${running ? '<span class="badge web">running now</span>' : ""}
+    </div>
+    <details>
+      <summary>how it works</summary>
+      <div class="body">
+        ${paras}
+        <div class="label">reality check</div>
+        <p>${esc(a.status_detail)}</p>
+        ${notes ? `<div class="label">gotchas</div><ul>${notes}</ul>` : ""}
+        <div class="label">where</div>
+        <ul><li class="mono">${esc(a.repo_path)}</li>${links.map(l => `<li>${l}</li>`).join("")}</ul>
+      </div>
+    </details>
+    <div class="actions">${actionsHTML(a, running)}</div>
+  </section>`;
+}
+
+function actionsHTML(a, running) {
+  if (a.mode === "link") {
+    return `<a href="${esc(a.url)}" target="_blank" rel="noopener"><button class="primary">↗ open</button></a>`;
+  }
+  const out = [];
+  const missing = (a.prereqs.missing_env || []);
+  const repoBad = !a.prereqs.repo_ok || !a.prereqs.scripts_ok;
+  const busy = RUN && RUN.running && RUN.app_id !== a.id;
+
+  for (const mode of ["robot", "dev"]) {
+    const c = a[mode];
+    if (!c) continue;
+    const reasons = [];
+    if (repoBad) reasons.push("repo or run script missing on disk");
+    if (missing.length) reasons.push(missing.join(", ") + " not set");
+    if (mode === "robot" && !(ROBOT && ROBOT.reachable)) reasons.push("robot is off");
+    if (busy) reasons.push(RUN.app_id + " is running");
+    const icon = mode === "robot" ? "▶" : "🧪";
+    const title = reasons.length ? reasons.join(" · ") : (c.hint || c.cmd.join(" "));
+    out.push(`<button class="${mode === "robot" ? "primary" : ""}" ${reasons.length ? "disabled" : ""}
+      title="${esc(title)}" onclick="launch('${esc(a.id)}','${mode}')">${icon} ${esc(c.label)}</button>`);
+  }
+  if (running) {
+    out.push(`<button class="stop" onclick="stopApp()">⏹ stop</button>`);
+    out.push(`<button onclick="toggleLogs(true)">📜 logs</button>`);
+  }
+  return out.join("");
+}
+
+function soonCard() {
+  return `
+  <section class="card soon">
+    <h2><span class="emoji" aria-hidden="true">🎙️</span>reachy concierge</h2>
+    <p class="pitch">chat with reachy to pick the activity — one brain, these apps as plugins</p>
+    <div class="badges"><span class="badge">coming soon · plan, not started</span></div>
+    <details>
+      <summary>the idea</summary>
+      <div class="body">
+        <p>a small voice loop owns the mic, the speaker, the camera and the motors, and hands them
+        over to an activity when you ask for one — « accorde mon sitar » suspends the conversation,
+        runs the tuning coach with the raw mic frames it needs, and takes the devices back when
+        you say stop.</p>
+        <p>this page's registry is exactly that menu: every card here already declares what it needs,
+        whether it can be interrupted, and how you would ask for it out loud.</p>
+      </div>
+    </details>
+  </section>`;
+}
+
+function render() {
+  $("#apps").innerHTML = APPS.map(cardHTML).join("") + soonCard();
+  renderBanner();
+}
+
+function renderRobot() {
+  const pill = $("#robot-pill");
+  if (!ROBOT) { pill.textContent = "⏳ checking the robot…"; pill.className = "pill"; return; }
+  if (ROBOT.reachable) {
+    const bits = ["🟢 robot up"];
+    if (ROBOT.version) bits.push("daemon " + ROBOT.version);
+    if (ROBOT.motor_mode) bits.push("motors " + ROBOT.motor_mode);
+    if (ROBOT.host) bits.push(ROBOT.host);
+    pill.textContent = bits.join(" · ");
+    pill.className = "pill up";
+  } else {
+    pill.textContent = "🔴 robot off — dev modes still available";
+    pill.className = "pill down";
+  }
+  $("#btn-motors").disabled = !ROBOT.reachable;
+  $("#btn-media").disabled = !ROBOT.reachable;
+}
+
+function renderBanner() {
+  const b = $("#banner");
+  if (RUN && RUN.running) {
+    b.hidden = false;
+    $("#banner-what").textContent = `▶ ${RUN.app_id} · ${RUN.label}`;
+    $("#banner-meta").textContent = `pid ${RUN.pid} · up ${uptime(RUN.uptime)} · ${RUN.cmd}`;
+  } else {
+    b.hidden = true;
+    if (LOGS_OPEN && !(RUN && RUN.running)) { /* keep the log drawer open after exit */ }
+  }
+}
+
+// ----------------------------------------------------------------- actions
+
+async function launch(id, mode) {
+  try {
+    const r = await api("/api/launch", {method:"POST", body: JSON.stringify({app_id:id, mode})});
+    RUN = r.run; LOG_SEEN = 0; $("#logs").textContent = "";
+    toggleLogs(true);
+    toast(`started ${id} (${mode})`);
+    refreshStatus();
+  } catch (e) { toast(e.message, true); }
+  render();
+}
+
+async function stopApp() {
+  try {
+    const r = await api("/api/stop", {method:"POST"});
+    toast(r.stopped ? `stopped ${r.app_id} (${(r.signals||[]).join(" → ")})` : "nothing was running");
+  } catch (e) { toast(e.message, true); }
+  await refreshStatus();
+  render();
+}
+
+async function preflight(action) {
+  try {
+    const r = await api("/api/robot/preflight/" + action, {method:"POST"});
+    toast(`${action}: ok (HTTP ${r.http_status})`);
+  } catch (e) { toast(`${action}: ${e.message}`, true); }
+  refreshRobot(true);
+}
+
+function toggleLogs(force) {
+  LOGS_OPEN = force === undefined ? !LOGS_OPEN : force;
+  $("#logs").hidden = !LOGS_OPEN;
+  if (LOGS_OPEN) pollLogs();
+}
+
+// ------------------------------------------------------------------- polls
+
+async function refreshApps() {
+  try { APPS = (await api("/api/apps")).apps; render(); } catch (e) { toast(e.message, true); }
+}
+
+async function refreshRobot(force) {
+  const was = ROBOT ? ROBOT.reachable : null;
+  try {
+    ROBOT = await api("/api/robot" + (force ? "?force=true" : ""));
+  } catch (e) { ROBOT = {reachable:false}; }
+  renderRobot();
+  // Only rebuild the cards when the answer actually changed — a re-render
+  // would slam every open "how it works" drawer shut every six seconds.
+  if (was !== ROBOT.reachable) render();
+}
+
+async function refreshStatus() {
+  try {
+    const s = await api("/api/status");
+    const was = RUN && RUN.running ? RUN.app_id : null;
+    RUN = s.run;
+    const now = RUN && RUN.running ? RUN.app_id : null;
+    if (was !== now) render(); else renderBanner();
+  } catch (e) { /* server restarting; next tick */ }
+}
+
+async function pollLogs() {
+  if (!LOGS_OPEN) return;
+  try {
+    const r = await api("/api/logs?since=" + LOG_SEEN);
+    if (r.lines && r.lines.length) {
+      const el = $("#logs");
+      const stick = el.scrollTop + el.clientHeight >= el.scrollHeight - 30;
+      el.textContent += (el.textContent ? "\n" : "") + r.lines.join("\n");
+      LOG_SEEN = r.total;
+      if (stick) el.scrollTop = el.scrollHeight;
+    }
+  } catch (e) { /* ignore */ }
+}
+
+$("#btn-motors").onclick = () => preflight("motors");
+$("#btn-media").onclick = () => preflight("media");
+$("#btn-refresh").onclick = () => refreshRobot(true);
+$("#btn-stop").onclick = stopApp;
+$("#btn-logs").onclick = () => toggleLogs();
+
+(async function boot() {
+  await refreshApps();
+  await refreshRobot(false);
+  await refreshStatus();
+  setInterval(refreshStatus, 2000);
+  setInterval(() => refreshRobot(false), 6000);
+  setInterval(pollLogs, 1500);
+})();
+</script>
+</body>
+</html>

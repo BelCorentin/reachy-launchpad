@@ -1,0 +1,212 @@
+{
+  "schema_version": 1,
+  "updated": "2026-08-19",
+  "consumers": [
+    "reachy-launchpad (this web app)",
+    "reachy-concierge (planned voice hub — reads the same file as its activity list)"
+  ],
+  "apps": [
+    {
+      "id": "sitar-guru",
+      "name": "sitar guru",
+      "emoji": "🎻",
+      "pitch": "pluck a string, reachy leans its head like a tuning needle and coaches you in french",
+      "description": "an embodied sitar tuning coach. the robot's own mic (16 kHz, over WebRTC) feeds a YIN pitch tracker; the deviation in cents drives head roll continuously at ~10 Hz (±50 ¢ mapped to ±25° — the head *is* the needle), and a pregenerated french phrase book says « plus haut ! » / « plus bas ! » / « parfait ! ».\n\nthe cool details: YIN rather than an FFT peak, because the sitar's jawari bridge routinely makes a partial louder than the fundamental and a spectral picker locks onto the wrong harmonic. the DSP core (YIN, tuning tables, cents/swara maths) is ported verbatim from the web tuner in `BelCorentin/art`, so the two agree to the cent. the coach is a pure state machine — you hand it (now, track) and it hands back actions — so a whole six-string session is testable from a scripted pitch sequence with no clock, no audio and no robot. it also checks you are on the string it asked for (« ça, c'est le jod — on cherche le baj ») and gives in after three stubborn repeats. no TTS in the loop: the vocabulary is a finite function of the preset, so all 46 phrases are synthesised once at setup and cached as WAVs.",
+      "repo_path": "~/git/reachy-sitar-guru",
+      "github_url": "https://github.com/BelCorentin/reachy-sitar-guru",
+      "status": "built-not-robot-tested",
+      "status_detail": "48 offline tests green; whole session demo-able with --dry-run --source demo. never run against the live robot — README has a 'Still needs live-robot validation' checklist (does it hear its own voice? does the roll sign read backwards?).",
+      "needs": ["mic", "motion", "speaker"],
+      "requires_env": [],
+      "launch": {
+        "mode": "process",
+        "robot": {
+          "label": "run on robot",
+          "cmd": ["./run.sh"],
+          "needs_robot": true
+        },
+        "dev": {
+          "label": "dry-run demo",
+          "cmd": ["./run.sh", "--dry-run", "--source", "demo"],
+          "needs_robot": false,
+          "hint": "full six-string session in the console, ASCII needle, ~1 min, no robot and no sitar"
+        },
+        "url": null
+      },
+      "notes": [
+        "first run ever needs ./run.sh --setup (venv + 46 edge-tts WAVs, ~1 min, network + ffmpeg).",
+        "--a4 446 accepts the sitar as it currently sits (~+23 ¢ sharp) instead of retuning the instrument to please a tuner.",
+        "run.sh preflights media/acquire AND motors/set_mode/enabled — the robot mic is the input here, so media acquire is load-bearing, not optional.",
+        "gestures (nod/shake/dance) use blocking goto_target and stall the audio loop 0.8–1.8 s; first thing to watch on hardware."
+      ],
+      "concierge": {
+        "activity": true,
+        "resources": ["mic", "speaker", "motion"],
+        "exclusive": true,
+        "interruptible": true,
+        "wants_raw_audio": true,
+        "voice_intents": ["accorde mon sitar", "tune the sitar", "sitar", "accordage"]
+      }
+    },
+    {
+      "id": "memoire",
+      "name": "mémoire",
+      "emoji": "🧠",
+      "pitch": "alzheimer memory companion — french care profile, journal, and a phone page for the family",
+      "description": "a memory companion aimed at people with alzheimer's / memory troubles, built *on top of* pollen's `reachy_mini_conversation_app` (a dependency, not a fork): a french care profile — calm, short sentences, never quizzes, gently reorients — plus SQLite journal tools plugged in through the app's external profile/tool mechanism.\n\n`journal_event` silently logs notable moments (visits, meals, medication, mood); `recall_journal` answers « qu'est-ce que j'ai fait aujourd'hui ? ». a second FastAPI server runs in-process on :7870, token-authenticated: /famille is a senior-friendly remote for the family (three huge buttons — play a recorded voice message on the robot speaker, take a camera snapshot, or have a written message spoken verbatim via edge-tts), /care is the caregiver dashboard whose honest signal is *repeated questions over 30 days with a week-over-week trend*, clustered from the person's own words, no model opinions.\n\nface seeking (needs daemon ≥ 1.9.0): when nobody has been in frame for ~8 s the body sweeps in widening yaw legs (±60° → ±120° → ±150°) until the tracker finds a face, then anchors — the robot turns around to look for people instead of staring at a wall.\n\nthis one is also the house style for the launchpad you're reading: FastAPI + everything inline, no CDN, works on a LAN with no internet.",
+      "repo_path": "~/git/reachy-memoire",
+      "github_url": "https://github.com/BelCorentin/reachy-memoire",
+      "status": "robot-tested",
+      "status_detail": "bring-up verified 17-08-2026 (connection, bidirectional WebRTC audio, camera, profile + journal tools, realtime session + french greeting). face lock verified live 19-08-2026 (sweep found a face at 120°). still pending: a full conversation-level session and the tailscale funnel path.",
+      "needs": ["mic", "camera", "motion", "speaker", "network"],
+      "requires_env": [],
+      "launch": {
+        "mode": "process",
+        "robot": {
+          "label": "run on robot",
+          "cmd": ["./run.sh", "--ui"],
+          "needs_robot": true,
+          "hint": "conversation UI on :7860, hub on :7870"
+        },
+        "dev": null,
+        "url": null
+      },
+      "notes": [
+        "needs HF auth (`hf auth login` or HF_TOKEN) — inference is hugging face's cloud realtime backend.",
+        "desk dev without the robot: start `reachy-mini-daemon --sim` (MuJoCo) first, then ./run.sh --ui. no dev button here because that daemon is a separate process the launchpad does not own.",
+        "NEVER tunnel :7860 — the upstream UI has no auth. only :7870 (token-authed) may be exposed, via scripts/expose.sh.",
+        "'command accepted' ≠ 'robot moved' — the only ground truth is reading encoders back (/api/state/present_head_pose).",
+        "after a daemon self-update the robot can be wedged (commands accepted, nothing moves): POST /api/daemon/restart then re-enable motors."
+      ],
+      "concierge": {
+        "activity": true,
+        "resources": ["mic", "camera", "speaker", "motion"],
+        "exclusive": true,
+        "interruptible": false,
+        "wants_raw_audio": true,
+        "voice_intents": ["mode mémoire", "compagnon mémoire", "companion"]
+      }
+    },
+    {
+      "id": "jukebox",
+      "name": "jukebox",
+      "emoji": "🎵",
+      "pitch": "show a hand sign, reachy plays that song — and dances to it, body on the bass, head on the melody",
+      "description": "camera frame → mediapipe's stock GestureRecognizer (pretrained, zero training) → debounce (N consecutive frames + cooldown + release-before-refire) → the song streams to the robot speaker. 👍 upbeat, 👎 beethoven, ✌️ libertango, ✊ stop, ☝️/👇 volume (hold to keep stepping).\n\nmusic is *streamed* over the WebRTC audio channel at 16 kHz ~0.4 s ahead of real time rather than uploaded as a file — that's what makes live gain changes possible mid-song, starts playback instantly, and gives the dance a sample-exact clock.\n\nthe dance is the nice part: each song is analysed once in pure numpy — BPM by onset autocorrelation plus three 20 Hz envelopes (broadband, low 40–250 Hz, high 1–4 kHz) cached as a .dance.json sidecar. the BODY follows the low band (tango-like yaw circle, z pulse on the beat), the HEAD follows the high band (pitch nods on the beat, roll wiggle at double time, accented on melodic transients) — so the accordion runs visibly ride on top of the body motion, decorrelated from it. libertango gets both layers doing different things; that's the whole point.",
+      "repo_path": "~/git/reachy-jukebox",
+      "github_url": "https://github.com/BelCorentin/reachy-jukebox",
+      "status": "built-not-robot-tested",
+      "status_detail": "19 offline checks green, gesture path exercised on the laptop webcam. on-robot playback + dance not yet live-tested (vault status 19-08-2026: « next: test jukebox robot allumé »).",
+      "needs": ["camera", "motion", "speaker"],
+      "requires_env": [],
+      "launch": {
+        "mode": "process",
+        "robot": {
+          "label": "run on robot",
+          "cmd": ["./run.sh"],
+          "needs_robot": true
+        },
+        "dev": {
+          "label": "laptop webcam",
+          "cmd": ["./run.sh", "--source", "webcam"],
+          "needs_robot": false,
+          "hint": "laptop webcam, gestures detected for real, playback log-only"
+        },
+        "url": null
+      },
+      "notes": [
+        "first run ever needs ./run.sh --setup (venv + mediapipe + the ~8 MB gesture model). needs ffmpeg.",
+        "./run.sh --play Victory skips gestures entirely and just plays that song on the robot — the fastest robot smoke test.",
+        "hold a sign steady ~1 s within ~2 m, decent light.",
+        "the hardware --volume endpoint can't be used mid-song (the daemon plays a test chirp that kills the current sound) — that's why gain is software-side.",
+        "don't run at the same time as the conversation app: its mic hears the music and the model starts reviewing your taste."
+      ],
+      "concierge": {
+        "activity": true,
+        "resources": ["camera", "speaker", "motion"],
+        "exclusive": true,
+        "interruptible": true,
+        "wants_raw_audio": false,
+        "voice_intents": ["mets de la musique", "play some music", "jukebox", "danse"]
+      }
+    },
+    {
+      "id": "narrator",
+      "name": "narrator",
+      "emoji": "👁️",
+      "pitch": "reachy watches the room and narrates what changes, in french, out loud in your terminal",
+      "description": "a camera frame every N seconds goes to claude (sonnet, vision) and comes back as a one-line french narration. the trick is that the model keeps context between frames, so it narrates *changes and events* — « quelqu'un entre », « il s'assoit » — instead of re-dumping the same static scene forever; when nothing changed it answers RAS, logged and printed as a dim heartbeat.\n\ncontext strategy: only the *current* frame is ever sent as an image. after each call the image turn is replaced by a text placeholder `[image à <ts>]` and the window is trimmed to the last 10 exchanges — so context stays cheap and text-only while the model still remembers what it already said. everything lands in logs/narration-<date>.jsonl, and `--recap` summarises the day in a single call.\n\nbuilt for a memory-impaired household: concise, factual, no chatter.",
+      "repo_path": "~/git/reachy-narrator",
+      "github_url": "https://github.com/BelCorentin/reachy-narrator",
+      "status": "built-not-robot-tested",
+      "status_detail": "tested off-robot only (webcam + directory sources, anthropic client stubbed in tests). vault status 18-08-2026: « testé hors robot. next: run live ».",
+      "needs": ["camera", "api-key", "network"],
+      "requires_env": ["ANTHROPIC_API_KEY"],
+      "launch": {
+        "mode": "process",
+        "robot": {
+          "label": "run on robot",
+          "cmd": ["./run.sh"],
+          "needs_robot": true,
+          "hint": "robot camera, one frame every 5 s"
+        },
+        "dev": {
+          "label": "laptop webcam",
+          "cmd": ["./run.sh", "--source", "webcam"],
+          "needs_robot": false,
+          "hint": "laptop webcam — still calls the anthropic API, so it costs tokens"
+        },
+        "url": null
+      },
+      "notes": [
+        "ANTHROPIC_API_KEY must be exported in the shell that starts the launchpad — run.sh refuses without it, in both modes.",
+        "the GitHub repo is private (it narrates a real household).",
+        "capture.py monkeypatches MediaManager.__init__ to force signalling_host from REACHY_SIGNALLING_HOST — the 1.8.3 wlan_ip bug.",
+        "./run.sh --recap summarises today's narration log without touching the robot."
+      ],
+      "concierge": {
+        "activity": true,
+        "resources": ["camera"],
+        "exclusive": false,
+        "interruptible": true,
+        "wants_raw_audio": false,
+        "voice_intents": ["qu'est-ce que tu vois", "raconte la pièce", "narrateur"]
+      }
+    },
+    {
+      "id": "reachying-for-the-stars",
+      "name": "reachying for the stars",
+      "emoji": "✨",
+      "pitch": "show a ✌️ and reachy unlocks the next fact from your curiosity vault, spoken on its own speaker",
+      "description": "the first app, and the odd one out: a reachy mini *JS* app that runs in the browser on the host shell (mountHost / connectToHost, SDK npm 1.8.0) and is deployed as a hugging face Space — nothing to launch from this laptop, you open it.\n\nfacts are a build-time snapshot exported from the obsidian curiosity vault by scripts/export_facts.py, which also pregenerates the speech (edge-tts → 16 kHz mono PCM WAV) so the fact plays on the *robot's* speaker with daemon-side motion/audio sync via playMove — one clock for audio and the talking gesture, instead of the browser's speechSynthesis and a robot bobbing along blind.\n\nsign detection is mediapipe tasks-vision running in-browser on the robot's WebRTC camera stream, model bundled locally.",
+      "repo_path": "~/git/reachyng-for-the-stars",
+      "github_url": "https://github.com/BelCorentin/reachyng-for-the-stars",
+      "status": "deployed-web",
+      "status_detail": "shipped 27-07-2026 as the private HF Space `ilikeitlikeit/reachying-for-the-stars` and opened from the robot's app store. not re-verified since the daemon went to 1.9.0.",
+      "needs": ["camera", "speaker", "motion", "network"],
+      "requires_env": [],
+      "launch": {
+        "mode": "link",
+        "robot": null,
+        "dev": null,
+        "url": "https://huggingface.co/spaces/ilikeitlikeit/reachying-for-the-stars"
+      },
+      "notes": [
+        "the Space is PRIVATE — the fact database is personal. you need to be logged in as `ilikeitlikeit`.",
+        "local dev is `npm install && npm run dev` (http://localhost:5173) with VITE_HF_TOKEN in .env.local — not wired into the launchpad on purpose, it is a node app not a run.sh.",
+        "free-tier HF cannot run app_build_command on static Spaces → scripts/deploy.sh builds locally and uploads dist/ via the python API.",
+        "refresh facts: scripts/export_facts.py, commit public/, redeploy.",
+        "SDK npm 1.8.0 lacks the documented /animation subpath → local safeReturn replacement."
+      ],
+      "concierge": {
+        "activity": false,
+        "resources": ["camera", "speaker", "motion"],
+        "exclusive": true,
+        "interruptible": true,
+        "wants_raw_audio": false,
+        "voice_intents": ["raconte-moi un fait", "curiosity"],
+        "note": "browser-hosted — the concierge cannot start it; at most it can tell you to open the Space. the curiosity *facts* are better reused directly (see the concierge plan's layer-3 connectors)."
+      }
+    }
+  ]
+}
