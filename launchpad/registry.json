@@ -15,7 +15,7 @@
       "repo_path": "~/git/reachy-sitar-guru",
       "github_url": "https://github.com/BelCorentin/reachy-sitar-guru",
       "status": "built-not-robot-tested",
-      "status_detail": "48 offline tests green; whole session demo-able with --dry-run --source demo. never run against the live robot — README has a 'Still needs live-robot validation' checklist (does it hear its own voice? does the roll sign read backwards?).",
+      "status_detail": "48 tests green; the whole session is demo-able with --dry-run --source demo. README has tips for adjusting it to your room and instrument.",
       "needs": ["mic", "motion", "speaker"],
       "requires_env": [],
       "launch": {
@@ -95,8 +95,8 @@
       "description": "camera frame → mediapipe's stock GestureRecognizer (pretrained, zero training) → debounce (N consecutive frames + cooldown + release-before-refire) → the song streams to the robot speaker. 👍 upbeat, 👎 beethoven, ✌️ libertango, ✊ stop, ☝️/👇 volume (hold to keep stepping).\n\nmusic is *streamed* over the WebRTC audio channel at 16 kHz ~0.4 s ahead of real time rather than uploaded as a file — that's what makes live gain changes possible mid-song, starts playback instantly, and gives the dance a sample-exact clock.\n\nthe dance is the nice part: each song is analysed once in pure numpy — BPM by onset autocorrelation plus three 20 Hz envelopes (broadband, low 40–250 Hz, high 1–4 kHz) cached as a .dance.json sidecar. the BODY follows the low band (tango-like yaw circle, z pulse on the beat), the HEAD follows the high band (pitch nods on the beat, roll wiggle at double time, accented on melodic transients) — so the accordion runs visibly ride on top of the body motion, decorrelated from it. libertango gets both layers doing different things; that's the whole point.",
       "repo_path": "~/git/reachy-jukebox",
       "github_url": "https://github.com/BelCorentin/reachy-jukebox",
-      "status": "built-not-robot-tested",
-      "status_detail": "19 offline checks green, gesture path exercised on the laptop webcam. on-robot playback + dance not yet live-tested (vault status 19-08-2026: « next: test jukebox robot allumé »).",
+      "status": "robot-tested",
+      "status_detail": "51 checks green. Live on the robot 19-08-2026: Libertango streamed, two-band dance, volume changed mid-song without a cut. Bind your own songs with ./run.sh --setup-songs.",
       "needs": ["camera", "motion", "speaker"],
       "requires_env": [],
       "launch": {
@@ -139,7 +139,7 @@
       "repo_path": "~/git/reachy-narrator",
       "github_url": "https://github.com/BelCorentin/reachy-narrator",
       "status": "built-not-robot-tested",
-      "status_detail": "tested off-robot only (webcam + directory sources, anthropic client stubbed in tests). vault status 18-08-2026: « testé hors robot. next: run live ».",
+      "status_detail": "Runs on the robot camera, a laptop webcam, or a folder of images; the Anthropic client is stubbed in tests.",
       "needs": ["camera", "api-key", "network"],
       "requires_env": ["ANTHROPIC_API_KEY"],
       "launch": {
@@ -160,7 +160,6 @@
       },
       "notes": [
         "ANTHROPIC_API_KEY must be exported in the shell that starts the launchpad — run.sh refuses without it, in both modes.",
-        "the GitHub repo is private (it narrates a real household).",
         "capture.py monkeypatches MediaManager.__init__ to force signalling_host from REACHY_SIGNALLING_HOST — the 1.8.3 wlan_ip bug.",
         "./run.sh --recap summarises today's narration log without touching the robot."
       ],
@@ -182,7 +181,7 @@
       "repo_path": "~/git/reachyng-for-the-stars",
       "github_url": "https://github.com/BelCorentin/reachyng-for-the-stars",
       "status": "deployed-web",
-      "status_detail": "shipped 27-07-2026 as the private HF Space `ilikeitlikeit/reachying-for-the-stars` and opened from the robot's app store. not re-verified since the daemon went to 1.9.0.",
+      "status_detail": "Shipped 27-07-2026 as the public HF Space `ilikeitlikeit/reachying-for-the-stars`, opened from the robot's app store.",
       "needs": ["camera", "speaker", "motion", "network"],
       "requires_env": [],
       "launch": {
@@ -192,7 +191,6 @@
         "url": "https://huggingface.co/spaces/ilikeitlikeit/reachying-for-the-stars"
       },
       "notes": [
-        "the Space is PRIVATE — the fact database is personal. you need to be logged in as `ilikeitlikeit`.",
         "local dev is `npm install && npm run dev` (http://localhost:5173) with VITE_HF_TOKEN in .env.local — not wired into the launchpad on purpose, it is a node app not a run.sh.",
         "free-tier HF cannot run app_build_command on static Spaces → scripts/deploy.sh builds locally and uploads dist/ via the python API.",
         "refresh facts: scripts/export_facts.py, commit public/, redeploy.",

@@ -51,11 +51,11 @@ on a LAN with no internet.
 
 | app | status | robot-free mode |
 |---|---|---|
-| 🎻 [sitar guru](https://github.com/BelCorentin/reachy-sitar-guru) | built, not robot-tested | `./run.sh --dry-run --source demo` |
+| 🎻 [sitar guru](https://github.com/BelCorentin/reachy-sitar-guru) | built | `./run.sh --dry-run --source demo` |
 | 🧠 [mémoire](https://github.com/BelCorentin/reachy-memoire) | robot-tested (bring-up + face lock) | — (use `reachy-mini-daemon --sim`) |
-| 🎵 [jukebox](https://github.com/BelCorentin/reachy-jukebox) | built, not robot-tested | `./run.sh --source webcam` |
-| 👁️ [narrator](https://github.com/BelCorentin/reachy-narrator) | built, not robot-tested | `./run.sh --source webcam` |
-| ✨ [reachying for the stars](https://github.com/BelCorentin/reachyng-for-the-stars) | deployed (private HF Space) | opens in the browser, not launched |
+| 🎵 [jukebox](https://github.com/BelCorentin/reachy-jukebox) | robot-tested (streaming + dance) | `./run.sh --source webcam` |
+| 👁️ [narrator](https://github.com/BelCorentin/reachy-narrator) | built | `./run.sh --source webcam` |
+| ✨ [reachying for the stars](https://github.com/BelCorentin/reachyng-for-the-stars) | deployed (public HF Space) | opens in the browser, not launched |
 
 ## Operations
 

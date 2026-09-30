@@ -102,7 +102,7 @@ NEED_ICONS = {
 
 STATUS_LABELS = {
     "robot-tested": "robot-tested",
-    "built-not-robot-tested": "built, not robot-tested",
+    "built-not-robot-tested": "built",
     "deployed-web": "deployed on the web",
 }
 

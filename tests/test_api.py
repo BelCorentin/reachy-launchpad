@@ -125,7 +125,7 @@ def test_apps_endpoint_shape(env):
     assert ids == ["fake", "other", "keyed", "web"]
     fake = body["apps"][0]
     assert fake["need_icons"] == ["🦾"]
-    assert fake["status_label"] == "built, not robot-tested"
+    assert fake["status_label"] == "built"
     assert fake["prereqs"]["repo_ok"] is True and fake["prereqs"]["scripts_ok"] is True
     assert body["apps"][2]["prereqs"]["missing_env"] == ["NOPE_MISSING_KEY"]
     assert body["concierge_teaser"]["status"] == "plan, not started"
